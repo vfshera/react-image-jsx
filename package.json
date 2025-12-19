@@ -9,17 +9,18 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@react-router/fs-routes": "^7.11.0",
     "@react-router/node": "7.10.1",
     "@react-router/serve": "7.10.1",
     "isbot": "^5.1.32",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router": "^7.11.0",
-    "svgo": "^4.0.0",
-    "vite-imagetools": "^9.0.2"
+    "react-router": "^7.11.0"
   },
   "devDependencies": {
     "@react-router/dev": "^7.11.0",
+    "svgo": "^4.0.0",
+    "vite-imagetools": "^9.0.2",
     "@stylistic/eslint-plugin": "^5.6.1",
     "@tailwindcss/vite": "^4.1.18",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
