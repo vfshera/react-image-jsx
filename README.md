@@ -1,87 +1,233 @@
-# Welcome to React Router!
+# React Image Optimization
 
-A modern, production-ready template for building full-stack React applications using React Router.
+> This is extracted from Qwik Default [Image Optimization](https://qwik.dev/docs/integrations/image-optimization/)
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+Image optimization is the process of reducing the number of bytes that represent an image. The smaller the image size, the faster it will load on a page. The smaller the image size, the less bandwidth it consumes. The less bandwidth it consumes, the better the experience for your users especially on mobile networks.
 
-## Features
+## Responsive Images
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+This is a built-in feature that relies on the [`vite-imagetools`](https://www.npmjs.com/package/vite-imagetools) module, so no additional packages or components need to be installed.
 
-## Getting Started
+#### How it works
 
-### Installation
+- Import any image from the `src` folder
+- The image is converted in several webp images, one for each breakpoint (200px, 400px, 600px, 800px, 1200px)
+- The image is processed and optimized to reduce its size
+- An `<img>` element is rendered, using the `srcset` attribute to set the image source for several resolutions
+- Now the browser will load the most suitable image for the resolution in use
 
-Install the dependencies:
+#### Key Points
 
-```bash
-npm install
+The community love this API for a number of reasons:
+
+- Zero runtime, zero JS
+- Zero props by default, simple API
+- Zero 404, strongly typed API
+- Zero layout reflows (Automatic width/height)
+- Hashed images, immutable cached
+- Automatic `.webp` / `.avif` format optimization
+- Automated `srcSet` generation
+- Extendable (use any `<img>` attribute)
+- Loading lazy and async decoding by default
+- Lightweight, a single `<img>` node in the HTML
+
+#### Usage
+
+Add the `?jsx` suffix **at the end** of the import
+
+```tsx
+import Image from "[IMAGE_PATH]?w=24&h=24&jsx";
 ```
 
-### Development
+> ⚠️ Make sure to put the `jsx` query parameter at the end of the import path, otherwise typescript might complain.
 
-Start the development server with HMR:
+Use the image in the template as a component:
 
-```bash
-npm run dev
+```tsx
+<Image />
 ```
 
-Your application will be available at `http://localhost:5173`.
+#### Result
 
-## Building for Production
+This script will generate the following `<img>` element with the following optimizations:
 
-Create a production build:
+- Quality = 75
+- Format = .webp
 
-```bash
-npm run build
+```tsx
+<img
+
+  decoding="async"
+  loading="lazy"
+  srcset="
+    /@imagetools/141464b77ebd76570693f2e1a6b0364f4b4feea7 200w,
+    /@imagetools/e70ec011d10add2ba28f9c6973b7dc0f11894307 400w,
+    /@imagetools/1f0dd65f511ffd34415a391bf350e7934ce496a1 600w,
+    /@imagetools/493154354e7e89c3f639c751e934d1be4fc05827 800w,
+    /@imagetools/324867f8f1af03474a17a9d19035e28a4c241aa1 1200w"
+  width="1200"
+  height="1200"
+>
 ```
 
-## Deployment
+> - `decoding="async"`: indicates that the image will not block the rendering of the page while the image is being decoded. For further reference, please check the [MDN web docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decoding).
+> - `loading="lazy"`: allows the browser to delay the loading of an image until it is visible in the viewport, which helps improve [page loading performance](https://web.dev/browser-level-image-lazy-loading/)
+> - `srcset`: this attribute allows to choose the most appropriate image based on the device's screen size and resolution
+> - `width` and `height`: setting `width` and `height` attributes prevents layout reflow, which hurts the [CLS](https://web.dev/cls/) score
 
-### Docker Deployment
+> **Note:** You can also change the default behavior by manually setting the value of these properties:
+>
+> - `<Image decoding="sync" loading="eager" />`
 
-To build and run using Docker:
+Thanks to `srcset` attribute the browser will load the most suitable image for the device's resolution:
 
-```bash
-docker build -t my-app .
+#### Example
 
-# Run the container
-docker run -p 3000:3000 my-app
+```tsx
+import Image from "~/media/your_image.png?jsx";
+
+export default Hero(){
+  return (
+    <div>
+      <Image />
+    </div>
+  );
+}
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+#### Customize image format
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+Images are automatically converted to `.webp` format, but you can also specify the format manually:
+Available formats:
 
-### DIY Deployment
+<div class="docs-long-list">
+- `heic`
+- `heif`
+- `avif`
+- `jpeg`
+- `jpg`
+- `jpe`
+- `tile`
+- `dz`
+- `png`
+- `raw`
+- `tiff`
+- `tif`
+- `webp`
+- `gif`
+- `jp2`
+- `jpx`
+- `j2k`
+- `j2c`
+- `jxl`
+</div>
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
+Supported file formats to be converted are:
 
-Make sure to deploy the output of `npm run build`
+<div class="docs-long-list">
+- `jpg`
+- `jpeg`
+- `png`
+- `webp`
+- `gif`
+- `tiff`
+- `avif`
+</div>
 
+In the below example, a `jpg` image is converted to a `png` format:
+
+```tsx
+import Image from "~/media/your_image.jpg?format=png&jsx";
+
+export default Header(){
+  return (
+    <div>
+      <Image />
+    </div>
+  );
+}
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+
+#### Customize image quality
+
+As noted above, the default quality is set to 75, but you can also specify the quality manually.
+
+Quality parameter is an integer between 1 and 100.
+
+```tsx
+import Image from "~/media/your_image.png?quality=100&jsx";
+
+export default Footer(){
+  return (
+    <div>
+      <Image />
+    </div>
+  );
+}
 ```
 
-## Styling
+#### Customize image `width` and `height`
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+You may need to set a custom `width` to the image:
 
----
+```tsx
+<Image style={{ width: "300px" }} />
+```
 
-Built with ❤️ using React Router.
+but in that case you need to manually specify the `height` as well to avoid it being stretched:
+
+```tsx
+<Image style={{ width: "300px", height: "200px" }} />
+```
+
+Below you can see a simple trick to avoid having to manually set the `height`, while also maintaining the aspect ratio:
+
+> **TIP:** you should always specify `width` and `height` values to prevent layout reflow
+
+```tsx
+import { component$ } from "@builder.io/qwik";
+import Image from "~/media/emote.png?jsx";
+
+export default component$(() => {
+  return (
+    <>
+      <h1>Image Example</h1>
+      <div className="image-wrapper">
+        <Image />
+      </div>
+    </>
+  );
+});
+```
+
+```css
+.image-wrapper {
+  width: 300px; /* Set the desired width of the wrapper */
+  position: relative; /* Required for absolute positioning */
+}
+
+.image-wrapper img {
+  width: 100%; /* Make the image fill the width of its container */
+  height: auto; /* Let the browser calculate the height to maintain aspect ratio */
+  display: block; /* Remove any extra white space below the image */
+}
+```
+
+#### Image Optimization for SVGs
+
+<abbr title="Scalable Vector Graphics">SVGs</abbr> can be added directly to your JSX code, but you can also use the image optimization approach to optimize them:
+
+```tsx
+import SvgImage from "~/media/your_image.svg?jsx";
+
+export default Card(){
+  return (
+    <>
+      <h1>Image Example</h1>
+      <div className="image-wrapper">
+        <SvgImage />
+      </div>
+    </>
+  );
+}
+```
