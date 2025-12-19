@@ -1,16 +1,16 @@
-import {
-  imagetools,
-  type OutputFormat,
-  type ProcessedImageMetadata,
-} from "vite-imagetools";
-import type { PluginOption } from "vite";
 import fs from "node:fs";
 import path from "node:path";
 import {
-  optimize,
-  type Config as SVGOConfig,
   type BuiltinsWithOptionalParams as SVGOBuiltinPluginsWithOptionalParams,
+  type Config as SVGOConfig,
+  optimize,
 } from "svgo";
+import type { PluginOption } from "vite";
+import {
+  type OutputFormat,
+  type ProcessedImageMetadata,
+  imagetools,
+} from "vite-imagetools";
 
 export interface ImageOptimizationOptions {
   jsxDirectives?: {
@@ -98,6 +98,15 @@ export function imagePlugin(
           const { jsx, ...params } = Object.fromEntries(
             url.searchParams.entries(),
           );
+          console.log("jsx", {
+            format: "webp",
+            quality: "75",
+            w: "200;400;600;800;1200",
+            withoutEnlargement: "",
+            ...userOptions?.jsxDirectives,
+            ...params,
+            as: "jsx",
+          });
 
           return new URLSearchParams({
             format: "webp",
@@ -115,22 +124,21 @@ export function imagePlugin(
     }),
     {
       name: "react-jsx-image",
-      load: {
-        order: "pre",
-        handler: async (id) => {
-          const { params, pathId } = parseId(id);
 
-          const extension = path.extname(pathId).toLowerCase();
+      enforce: "pre",
+      async load(id) {
+        const { params, pathId } = parseId(id);
 
-          if (extension === ".svg" && params.has("jsx")) {
-            const code = await fs.promises.readFile(pathId, "utf-8");
+        const extension = path.extname(pathId).toLowerCase();
 
-            return {
-              code,
-              moduleSideEffects: false,
-            };
-          }
-        },
+        if (extension === ".svg" && params.has("jsx")) {
+          const code = await fs.promises.readFile(pathId, "utf-8");
+
+          return {
+            code,
+            moduleSideEffects: false,
+          };
+        }
       },
       transform(code, id) {
         id = id.toLowerCase();
@@ -150,17 +158,16 @@ export function imagePlugin(
               code:
                 code.slice(0, index) +
                 `
+import { createElement } from 'react';
 export default function Image(props) {
-  return (
-    <img
-      srcSet={srcSet}
-      width={width}
-      height={height}
-      decoding="async"
-      loading="lazy"
-      {...props}
-    />
-  );
+ return createElement('img', {
+    srcSet,
+    width,
+    height,
+    decoding: 'async',
+    loading: 'lazy',
+    ...props
+  });
 }`,
               map: null,
             };
@@ -172,13 +179,12 @@ export default function Image(props) {
 
             return {
               code: `
+import { createElement } from 'react';
 export default function SvgImage(props) {
-  return (
-    <svg
-      {...${JSON.stringify(svgAttributes)}}
-      {...props}
-    />
-  );
+  return createElement('svg', {
+    ...${JSON.stringify(svgAttributes)},
+    ...props
+  });
 }`,
               map: null,
             };
