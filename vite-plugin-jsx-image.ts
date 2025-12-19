@@ -1,4 +1,8 @@
-import { imagetools, type OutputFormat } from "vite-imagetools";
+import {
+  imagetools,
+  type OutputFormat,
+  type ProcessedImageMetadata,
+} from "vite-imagetools";
 import type { PluginOption } from "vite";
 import fs from "node:fs";
 import path from "node:path";
@@ -58,12 +62,12 @@ export function imagePlugin(
             .map((meta) => `${meta.src} ${meta.width}w`)
             .join(", ");
 
-          let largestImage: any;
+          let largestImage: ProcessedImageMetadata | null = null;
 
           let largestImageSize = 0;
 
           for (let i = 0; i < metadatas.length; i++) {
-            const m = metadatas[i] as any;
+            const m = metadatas[i];
 
             if (m.width > largestImageSize) {
               largestImage = m;
